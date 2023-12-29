@@ -19,6 +19,7 @@ def parse_arguments():
 def load_data(data_directory):
     train_dir = os.path.join(data_directory, 'train')
     valid_dir = os.path.join(data_directory, 'valid')
+    test_dir = os.path.join(data_directory, 'test')
 
     train_transforms = transforms.Compose([
         transforms.RandomRotation(30),
@@ -35,22 +36,29 @@ def load_data(data_directory):
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
+    test_transforms = transforms.Compose([
+        transforms.Resize(255),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+
     train_dataset = datasets.ImageFolder(train_dir, transform=train_transforms)
     valid_dataset = datasets.ImageFolder(valid_dir, transform=valid_transforms)
+    test_dataset = datasets.ImageFolder(test_dir, transform=test_transforms)
 
     trainloader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True)
     validloader = torch.utils.data.DataLoader(valid_dataset, batch_size=32)
+    testloader = torch.utils.data.DataLoader(test_dataset, batch_size=32)
 
-    return trainloader, validloader
+    return trainloader, validloader, testloader
 
 def build_model(arch, hidden_units):
     model = getattr(models, arch)(pretrained=True)
 
-    # Freeze parameters so we don't backprop through them
     for param in model.parameters():
         param.requires_grad = False
 
-    # Define a new classifier
     if arch.startswith('vgg'):
         classifier_input_size = model.classifier[0].in_features
         model.classifier = nn.Sequential(
@@ -150,7 +158,7 @@ def save_checkpoint(model, optimizer, arch, hidden_units, save_dir):
 def main():
     args = parse_arguments()
 
-    trainloader, validloader = load_data(args.data_directory)
+    trainloader, validloader, testloader = load_data(args.data_directory)
 
     model = build_model(args.arch, args.hidden_units)
 
@@ -162,6 +170,10 @@ def main():
     train_model(model, criterion, optimizer, trainloader, validloader, args.epochs, device)
 
     save_checkpoint(model, optimizer, args.arch, args.hidden_units, args.save_dir)
+
+    # Validate the model on the test set
+    test_loss, test_accuracy = validate_model(model, criterion, testloader, device)
+    print(f"Test loss: {test_loss:.3f}.. Test accuracy: {test_accuracy:.3f}")
 
 if __name__ == '__main__':
     main()
