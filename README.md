@@ -2,13 +2,13 @@
 
 Project code for Udacity's AI Programming with Python Nanodegree program. In this project, students first develop code for an image classifier built with PyTorch, then convert it into a command line application.
 
-Part of https://github.com/udacity/aipnd-project
+Part of this [https://github.com/udacity/aipnd-project](Starter project)
 
-## our data directory (args.data_directory) contains the 'train' and 'valid' subdirectories:
+## our data directory (args.data_directory) contains the `test` `train` and `valid` subdirectories:
 ```
 - data_directory
   - train
-    - class_1
+    - class_
       - image1.jpg
       - image2.jpg
       ...
